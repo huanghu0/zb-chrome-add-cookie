@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-eval';">
+  <link rel="stylesheet" href="./lib/element-plus-2.7.0.css">
+  <link rel="stylesheet" href="./dist/components.css">
+  <style>   
+    /* 1. 扩大弹窗整体宽度（关键：设置 body 宽度，Chrome 插件弹窗宽度由 body 决定） */
+    body {
+      width: 600px; /* 按需调整，默认 450px，现在改为 600px，可设为 700px/800px 等 */
+      min-width: 600px; /* 最小宽度，防止缩小 */
+      padding: 15px;
+      margin: 0;
+      overflow: hidden; /* 避免出现滚动条 */
+    }
+
+    /* 2. 让组件容器自适应宽度（可选，确保 Element Plus 组件占满宽度） */
+    #app {
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    /* 3. 可选：调整 Element Plus 表单/卡片的宽度，避免组件挤压 */
+    .el-card {
+      width: 100%;
+    }
+    .el-form {
+      width: 100%;
+    }
+    .el-input, .el-textarea {
+      width: 100% !important; /* 强制输入框占满父容器 */
+    }  
+  </style>
+</head>
+<body>
+  <div id="app">
+   
+  </div>
+  <script src="./lib/vue-3.3.4.js"></script>
+  <script src="./lib/element-plus.js"></script>
+  <script src="./lib/element-plus-icon.js"></script>
+  <script src="./dist/token-injector-lib.umd.js"></script>
+  <script src="./popup.js">
+  </script>
+</body>
+</html>

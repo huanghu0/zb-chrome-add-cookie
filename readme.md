@@ -1,0 +1,4 @@
+插件是add-cookie-plugin文件
+组件开发在components
+
+插件说明向浏览器中添加token
