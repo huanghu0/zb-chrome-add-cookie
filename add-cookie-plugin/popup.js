@@ -5,6 +5,7 @@ window.onload = function() {
     const app = createApp({
         render() {
             return h(TokenInjector,{
+                'default-storage-type':"cookie",
                 'default-token-name':"jwt_token",
                 'default-expire-hours':12
             })

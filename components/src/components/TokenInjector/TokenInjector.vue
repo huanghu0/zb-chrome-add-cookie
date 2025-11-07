@@ -6,6 +6,18 @@
     <div class="content-container">
       <!-- 表单部分（保持不变） -->
       <el-form :model="form" :rules="formRules" ref="formRef" label-width="120px" class="form-container">
+        <!-- 存储方式选择 -->
+        <el-form-item label="存储方式" prop="storageType">
+          <el-select
+            v-model="form.storageType"
+            placeholder="选择存储方式"
+            clearable
+          >
+            <el-option label="Cookie" value="cookie" />
+            <el-option label="LocalStorage" value="localStorage" />
+            <el-option label="SessionStorage" value="sessionStorage" />
+          </el-select>
+        </el-form-item>        
         <el-form-item label="Token 名称" prop="tokenName">
           <el-input
             v-model="form.tokenName"
@@ -53,6 +65,10 @@ import { Loading } from '@element-plus/icons-vue';
 
 // 组件 Props
 const props = defineProps({
+  defaultStorageType:{
+    type:String,
+    default:'cookie'
+  },
   defaultTokenName: {
     type:String,
     default:'auth_token'
@@ -70,6 +86,7 @@ const props = defineProps({
 // 表单相关
 const formRef = ref(null);
 const form = ref({
+  storageType: props.defaultStorageType,
   tokenName: props.defaultTokenName,
   tokenValue: '',
   expireHours: props.defaultExpireHours
@@ -77,6 +94,7 @@ const form = ref({
 
 // 表单校验规则
 const formRules = ref({
+  storageType: [{ required: true, message: '请选择存储方式', trigger: 'change' }],
   tokenName: [{ required: true, message: '请输入 Token 名称', trigger: 'blur' }],
   tokenValue: [{ required: true, message: '请输入 Token 值', trigger: 'blur' }],
   expireHours: [{ required: true, message: '请输入过期时间', trigger: 'blur' }]
@@ -89,6 +107,17 @@ const messageType = ref('success'); // 提示类型
 const { disableExpireInput } = props;
 
 // 监听 props 变化（支持动态更新默认值）
+
+watch(
+  () => props.defaultStorageType,
+  (newVal) => {
+    if (newVal && !form.value.storageType) {
+      form.value.storageType = newVal;
+    }
+  },
+  { immediate: true }
+);
+
 watch(
   () => props.defaultTokenName,
   (newVal) => {
@@ -135,110 +164,136 @@ const handleInject = async () => {
   message.value = '';
 
   try {
-    const { tokenName, tokenValue, expireHours } = form.value;
-    let currentDomain = '';
+    const { storageType, tokenName, tokenValue, expireHours } = form.value;
+    
 
     // 2. 自动检测环境：是否为 Chrome 插件环境
     const isChromeExtension = typeof window !== 'undefined' && typeof chrome !== 'undefined' && chrome.tabs && chrome.cookies;
 
     if (isChromeExtension) {
-      // 👉 环境 1：Chrome 插件环境（使用 Chrome API，功能更完善）
-      const [currentTab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (!currentTab.url) {
-        throw new Error('无法获取当前页面 URL，请刷新页面后重试');
-      }
-      const urlObj = new URL(currentTab.url);
-      currentDomain = urlObj.hostname;
+      if(storageType == 'cookie'){
+        let currentDomain = '';
+        // 👉 环境 1：Chrome 插件环境（使用 Chrome API，功能更完善）
+        const [currentTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        if (!currentTab.url) {
+          throw new Error('无法获取当前页面 URL，请刷新页面后重试');
+        }
+        const urlObj = new URL(currentTab.url);
+        currentDomain = urlObj.hostname;
 
-      // 构造 Chrome Cookie 参数
-      const cookieParams = {
-        url: urlObj.origin,
-        name: tokenName,
-        value: tokenValue,
-        secure: urlObj.protocol === 'https:',
-        httpOnly: false,
-        sameSite: 'lax',
-        path: '/'
-      };
+        // 构造 Chrome Cookie 参数
+        const cookieParams = {
+          url: urlObj.origin,
+          name: tokenName,
+          value: tokenValue,
+          secure: urlObj.protocol === 'https:',
+          httpOnly: false,
+          sameSite: 'lax',
+          path: '/'
+        };
 
-      // 设置过期时间
-      if (expireHours > 0 && !disableExpireInput) {
-        const expirationDate = new Date();
-        expirationDate.setTime(expirationDate.getTime() + expireHours * 60 * 60 * 1000);
-        cookieParams.expirationDate = expirationDate.getTime() / 1000;
-      }
+        // 设置过期时间
+        if (expireHours > 0 && !disableExpireInput) {
+          const expirationDate = new Date();
+          expirationDate.setTime(expirationDate.getTime() + expireHours * 60 * 60 * 1000);
+          cookieParams.expirationDate = expirationDate.getTime() / 1000;
+        }
 
-      // 调用 Chrome API 注入 Cookie
-      await new Promise((resolve, reject) => {
-        chrome.cookies.set(cookieParams, (cookie) => {
-          if (chrome.runtime.lastError) {
-            const errMsg = chrome.runtime.lastError.message;
-            // 权限错误特殊提示
-            if (errMsg.includes('No host permissions')) {
-              reject(new Error(`注入失败：无 ${urlObj.origin} 的 Cookie 操作权限，请检查插件 manifest 配置`));
-            } else {
-              reject(new Error(`注入失败：${errMsg}`));
+        // 调用 Chrome API 注入 Cookie
+        await new Promise((resolve, reject) => {
+          chrome.cookies.set(cookieParams, (cookie) => {
+            if (chrome.runtime.lastError) {
+              const errMsg = chrome.runtime.lastError.message;
+              // 权限错误特殊提示
+              if (errMsg.includes('No host permissions')) {
+                reject(new Error(`注入失败：无 ${urlObj.origin} 的 Cookie 操作权限，请检查插件 manifest 配置`));
+              } else {
+                reject(new Error(`注入失败：${errMsg}`));
+              }
+              return;
             }
-            return;
-          }
-          if (!cookie) {
-            reject(new Error('注入失败：Cookie 设置异常'));
-            return;
-          }
-          resolve();
+            if (!cookie) {
+              reject(new Error('注入失败：Cookie 设置异常'));
+              return;
+            }
+            resolve();
+          });
         });
-      });
+
+        // 3. 成功提示（双环境通用）
+        message.value = `✅ 成功注入 Token 到 ${currentDomain}！`;
+        messageType.value = 'success';
+        ElNotification({
+          title: 'Success',
+          message: `Cookie 注入成功，可在开发者工具 Application → Cookies → ${currentDomain} 中查看`,
+          type: 'success',      
+        })
+
+      }else{
+        const [currentTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        if (!currentTab.url) {
+          throw new Error('无法获取当前页面 URL，请刷新页面后重试');
+        }
+        let currentOrigin = new URL(currentTab.url).origin;
+
+        await injectToStorageByExtension(storageType, tokenName, tokenValue, currentOrigin);     
+      }
     } else {
-      // 👉 环境 2：非 Chrome 插件环境（本地 Vue3 项目、普通浏览器，使用 document.cookie）
-      if (typeof window === 'undefined') {
-        throw new Error('当前环境不支持 Cookie 操作');
-      }
+      if(storageType == 'cookie'){
+        // 👉 环境 2：非 Chrome 插件环境（本地 Vue3 项目、普通浏览器，使用 document.cookie）
+        if (typeof window === 'undefined') {
+          throw new Error('当前环境不支持 Cookie 操作');
+        }
+        let currentDomain = '';
+        const urlObj = new URL(window.location.href);
+        currentDomain = urlObj.hostname;
+        const isHttps = urlObj.protocol === 'https:';
 
-      const urlObj = new URL(window.location.href);
-      currentDomain = urlObj.hostname;
-      const isHttps = urlObj.protocol === 'https:';
+        // 构造 Cookie 字符串（符合浏览器原生格式）
+        let cookieStr = `${encodeURIComponent(tokenName)}=${encodeURIComponent(tokenValue)}; path=/;`;
 
-      // 构造 Cookie 字符串（符合浏览器原生格式）
-      let cookieStr = `${encodeURIComponent(tokenName)}=${encodeURIComponent(tokenValue)}; path=/;`;
+        // 添加过期时间（0 为会话级，不设置 expires）
+        if (expireHours > 0 && !disableExpireInput) {
+          const expirationDate = new Date();
+          expirationDate.setTime(expirationDate.getTime() + expireHours * 60 * 60 * 1000);
+          cookieStr += ` expires=${expirationDate.toUTCString()};`;
+        }
 
-      // 添加过期时间（0 为会话级，不设置 expires）
-      if (expireHours > 0 && !disableExpireInput) {
-        const expirationDate = new Date();
-        expirationDate.setTime(expirationDate.getTime() + expireHours * 60 * 60 * 1000);
-        cookieStr += ` expires=${expirationDate.toUTCString()};`;
-      }
+        // 添加 secure 标记（仅 HTTPS 环境）
+        if (isHttps) {
+          cookieStr += ' secure;';
+        }
 
-      // 添加 secure 标记（仅 HTTPS 环境）
-      if (isHttps) {
-        cookieStr += ' secure;';
-      }
+        // 添加 sameSite 策略
+        cookieStr += ' SameSite=Lax;';
 
-      // 添加 sameSite 策略
-      cookieStr += ' SameSite=Lax;';
+        // 特殊处理：localhost 不设置 domain（否则 Cookie 无法生效）
+        if (currentDomain !== 'localhost' && !currentDomain.startsWith('127.0.0.')) {
+          cookieStr += ` domain=${currentDomain};`;
+        }
 
-      // 特殊处理：localhost 不设置 domain（否则 Cookie 无法生效）
-      if (currentDomain !== 'localhost' && !currentDomain.startsWith('127.0.0.')) {
-        cookieStr += ` domain=${currentDomain};`;
-      }
+        // 注入 Cookie（原生 API）
+        document.cookie = cookieStr;
 
-      // 注入 Cookie（原生 API）
-      document.cookie = cookieStr;
+        // 验证 Cookie 是否注入成功（可选）
+        const isSuccess = document.cookie.includes(encodeURIComponent(tokenName));
+        if (!isSuccess) {
+          throw new Error('Cookie 注入失败，请检查浏览器 Cookie 设置');
+        }   
+        
+        // 3. 成功提示（双环境通用）
+        message.value = `✅ 成功注入 Token 到 ${currentDomain}！`;
+        messageType.value = 'success';
+        ElNotification({
+          title: 'Success',
+          message: `Cookie 注入成功，可在开发者工具 Application → Cookies → ${currentDomain} 中查看`,
+          type: 'success',      
+        })        
 
-      // 验证 Cookie 是否注入成功（可选）
-      const isSuccess = document.cookie.includes(encodeURIComponent(tokenName));
-      if (!isSuccess) {
-        throw new Error('Cookie 注入失败，请检查浏览器 Cookie 设置');
+      }else{
+        injectToStorageDirectly(storageType, tokenName, tokenValue);
       }
     }
-
-    // 3. 成功提示（双环境通用）
-    message.value = `✅ 成功注入 Token 到 ${currentDomain}！`;
-    messageType.value = 'success';
-    ElNotification({
-      title: 'Success',
-      message: `Cookie 注入成功，可在开发者工具 Application → Cookies → ${currentDomain} 中查看`,
-      type: 'success',      
-    })
   } catch (error) {
     // 4. 错误处理（双环境通用）
     const errMsg = error instanceof Error ? error.message : '未知错误';
@@ -252,6 +307,73 @@ const handleInject = async () => {
   } finally {
     isInjecting.value = false;
   }
+};
+
+
+// 直接操作存储（普通浏览器环境，当前页面）
+const injectToStorageDirectly = (
+  storageType,
+  key,
+  value
+) => {
+  try {
+    // 处理特殊字符（避免存储失败）
+    const safeKey = escape(key);
+    const safeValue = escape(value);
+    window[storageType].setItem(safeKey, safeValue);
+    
+    ElNotification({
+      title: 'Success',
+      message: `Cookie 注入成功，可在开发者工具 Application → ${storageType} 中查看`,
+      type: 'success',      
+    })       
+  } catch (err) {
+    throw new Error(`存储操作失败：${err.message}`);
+  }
+};
+
+// 通过 Chrome 插件 API 注入到目标页面存储（popup 环境）
+const injectToStorageByExtension = async (
+  storageType,
+  key,
+  value,
+  origin
+) => {
+  return new Promise((resolve, reject) => {
+    // 向当前页面注入脚本，执行存储操作（跨域/跨页面需通过 executeScript）
+    chrome.tabs.executeScript(
+      {
+        code: `
+          try {
+            const safeKey = escape('${escape(key)}');
+            const safeValue = escape('${escape(value)}');
+            ${storageType}.setItem(safeKey, safeValue);
+            console.log('Token 注入成功（Chrome 插件）：', '${key}');
+          } catch (err) {
+            console.error('存储注入失败（Chrome 插件）：', err);
+            throw err;
+          }
+        `,
+        runAt: 'document_idle'
+      },
+      (results) => {
+        if (chrome.runtime.lastError) {
+          reject(new Error(chrome.runtime.lastError.message));
+          return;
+        }
+        if (results?.[0] === false) {
+          reject(new Error('无法访问当前页面的存储，请检查页面权限或刷新页面'));
+          return;
+        }
+        ElNotification({
+          title: 'Success',
+          message: `Cookie 注入成功，可在开发者工具 Application → ${storageType} 中查看`,
+          type: 'success',      
+        })         
+        resolve();
+      }
+    );
+  });
 };
 </script>
 
