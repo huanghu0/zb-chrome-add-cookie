@@ -6,6 +6,18 @@
     <div class="content-container">
       <!-- 表单部分（保持不变） -->
       <el-form :model="form" :rules="formRules" ref="formRef" label-width="120px" class="form-container">
+        <!-- 目标域名输入（新增核心） -->
+        <el-form-item label="目标域名" prop="targetDomain">
+          <el-input
+            v-model="form.targetDomain"
+            placeholder="输入目标域名（如 https://doubao.com 或 doubao.com）"
+            clearable
+            @input="handleDomainInput"
+          />
+          <el-text size="small" type="info" class="mt-1 block">
+            支持格式：doubao.com、https://test.doubao.com、http://localhost:8080
+          </el-text>
+        </el-form-item>  
         <!-- 存储方式选择 -->
         <el-form-item label="存储方式" prop="storageType">
           <el-select
@@ -83,23 +95,97 @@ const props = defineProps({
   }
 });
 
+// 域名输入处理：实时格式化
+const handleDomainInput = (val) => {
+  if (DomainValidator.isValidDomain(val)) {
+    formattedDomain.value = DomainValidator.formatDomain(val);
+  } else {
+    formattedDomain.value = '';
+  }
+};
+
+// 自定义校验：域名合法性
+const validateDomain = (rule, value, callback) => {
+  if (!value.trim()) {
+    callback('请输入目标域名');
+    return;
+  }
+  if (!DomainValidator.isValidDomain(value)) {
+    callback('域名格式不合法 支持 abc.com 、 https://test.abc.com）');
+    return;
+  }
+  formattedDomain.value = DomainValidator.formatDomain(value);
+  callback();
+};
+
+
 // 表单相关
 const formRef = ref(null);
 const form = ref({
+  targetDomain:'',
   storageType: props.defaultStorageType,
   tokenName: props.defaultTokenName,
   tokenValue: '',
   expireHours: props.defaultExpireHours
 });
 
+const formattedDomain = ref('')
+
+const DomainValidator = {
+  /**
+   * 验证域名是否合法（支持带协议/不带协议、带端口）
+   * @param domain 用户输入的域名（如 doubao.com、https://test.doubao.com:8080）
+   */
+  isValidDomain(domain) {
+    if (!domain.trim()) return false;
+    // 简化版域名正则：支持协议、子域名、端口、路径
+    const domainReg = /^(https?:\/\/)?(([\w-]+\.)+[\w-]+|localhost|(\d{1,3}\.){3}\d{1,3})(:\d+)?(\/.*)?$/;
+    return domainReg.test(domain);
+  },
+
+  /**
+   * 格式化域名：补全协议（默认 https），确保格式正确
+   * @param domain 用户输入的域名
+   */
+  formatDomain(domain) {
+    let formatted = domain.trim();
+    // 补全协议（无协议时默认 http）
+    if (!formatted.startsWith('http://') && !formatted.startsWith('https://')) {
+      formatted = `http://${formatted}`;
+    }
+    // 处理端口和路径（确保 URL 格式完整）
+    try {
+      const urlObj = new URL(formatted);
+      return urlObj.origin; // 返回 origin（协议+域名+端口），避免路径干扰
+    } catch (error) {
+      return formatted;
+    }
+  },
+
+  /**
+   * 提取域名的主机名（用于 Cookie 配置）
+   * @param domain 格式化后的域名（如 http://test.doubao.com:8080）
+   */
+  getHostname(domain) {
+    try {
+      return new URL(domain).hostname;
+    } catch (error) {
+      return domain;
+    }
+  }
+};
+
 // 表单校验规则
 const formRules = ref({
+  targetDomain: [
+    { required: true, message: '请输入目标域名', trigger: 'blur' },
+    { validator: validateDomain, trigger: 'blur' } // 自定义域名校验
+  ],  
   storageType: [{ required: true, message: '请选择存储方式', trigger: 'change' }],
   tokenName: [{ required: true, message: '请输入 Token 名称', trigger: 'blur' }],
   tokenValue: [{ required: true, message: '请输入 Token 值', trigger: 'blur' }],
   expireHours: [{ required: true, message: '请输入过期时间', trigger: 'blur' }]
 });
-
 // 状态管理
 const isInjecting = ref(false); // 注入加载状态
 const message = ref(''); // 结果提示信息
@@ -149,6 +235,7 @@ onMounted(() => {
 const handleReset = () => {
   formRef.value?.resetFields();
   message.value = '';
+  formattedDomain.value = '';
 };
 
 // 核心：注入 Cookie 逻辑
@@ -166,37 +253,29 @@ const handleInject = async () => {
   try {
     const { storageType, tokenName, tokenValue, expireHours } = form.value;
     
-
+    const targetOrigin = formattedDomain.value;
     // 2. 自动检测环境：是否为 Chrome 插件环境
     const isChromeExtension = typeof window !== 'undefined' && typeof chrome !== 'undefined' && chrome.tabs && chrome.cookies;
 
     if (isChromeExtension) {
       if(storageType == 'cookie'){
-        let currentDomain = '';
-        // 👉 环境 1：Chrome 插件环境（使用 Chrome API，功能更完善）
-        const [currentTab] = await chrome.tabs.query({ active: true, currentWindow: true });
-        if (!currentTab.url) {
-          throw new Error('无法获取当前页面 URL，请刷新页面后重试');
-        }
-        const urlObj = new URL(currentTab.url);
-        currentDomain = urlObj.hostname;
-
-        // 构造 Chrome Cookie 参数
+        const urlObj = new URL(targetOrigin);
         const cookieParams = {
-          url: urlObj.origin,
+          url: targetOrigin, // 目标域名 origin
           name: tokenName,
           value: tokenValue,
-          secure: urlObj.protocol === 'https:',
+          secure: urlObj.protocol === 'https:', // HTTPS 自动启用 secure
           httpOnly: false,
           sameSite: 'lax',
-          path: '/'
+          path: '/', // 全站可用
+          domain: DomainValidator.getHostname(targetOrigin) // 自动提取主机名
         };
 
-        // 设置过期时间
-        if (expireHours > 0 && !disableExpireInput) {
+        // 设置过期时间（0 为会话级）
+        if (expireHours > 0) {
           const expirationDate = new Date();
           expirationDate.setTime(expirationDate.getTime() + expireHours * 60 * 60 * 1000);
-          cookieParams.expirationDate = expirationDate.getTime() / 1000;
+          cookieParams.expirationDate = expirationDate.getTime() / 1000; // 秒级时间戳
         }
 
         // 调用 Chrome API 注入 Cookie
@@ -221,31 +300,70 @@ const handleInject = async () => {
         });
 
         // 3. 成功提示（双环境通用）
-        message.value = `✅ 成功注入 Token 到 ${currentDomain}！`;
+        message.value = `✅ 成功注入 Token 到 ${targetOrigin}！`;
         messageType.value = 'success';
         ElNotification({
           title: 'Success',
-          message: `Cookie 注入成功，可在开发者工具 Application → Cookies → ${currentDomain} 中查看`,
+          message: `Cookie 注入成功，可在开发者工具 Application → Cookies → ${targetOrigin} 中查看`,
           type: 'success',      
         })
 
       }else{
-        const [currentTab] = await chrome.tabs.query({ active: true, currentWindow: true });
-        if (!currentTab.url) {
-          throw new Error('无法获取当前页面 URL，请刷新页面后重试');
-        }
-        let currentOrigin = new URL(currentTab.url).origin;
+        // 检查目标域名是否已打开标签页
+        const [targetTab] = await new Promise((resolve) => {
+          chrome.tabs.query({ url: `${targetOrigin}/*` }, resolve);
+        });
 
-        await injectToStorageByExtension(storageType, tokenName, tokenValue, currentOrigin);     
+        if (!targetTab) {
+          ElNotification({
+            title: 'Error',
+            message: `未找到打开的 ${targetOrigin} 标签页，请先打开目标域名页面`,
+            type: 'error',
+          })          
+          return          
+        }
+
+        // 通过 scripting API 注入脚本（V3 推荐，替代 executeScript）
+        try {
+          console.log(targetTab,'targetTab')
+          await chrome.scripting.executeScript({
+            target: { tabId: targetTab.id },
+            func: (storageType, key, value) => {
+              const safeKey = escape(key);
+              const safeValue = escape(value);
+              window[storageType].setItem(safeKey, safeValue);
+            },
+            args: [storageType, tokenName, tokenValue],
+            world: 'MAIN' // 注入到页面主世界，确保能访问页面存储
+          });
+          ElNotification({
+            title: 'Success',
+            message: `Cookie 注入成功，可在开发者工具 Application → ${storageType} 中查看`,
+            type: 'success',      
+          }) 
+          // await injectToStorageByExtension(storageType,tokenName,tokenValue,expireHours)
+        } catch (err) {
+          ElNotification({
+            title: 'Error',
+            message: `插件注入失败：${err.message}（请检查目标页面是否允许脚本注入）`,
+            type: 'error',
+          })          
+          return           
+        }  
       }
     } else {
       if(storageType == 'cookie'){
         // 👉 环境 2：非 Chrome 插件环境（本地 Vue3 项目、普通浏览器，使用 document.cookie）
         if (typeof window === 'undefined') {
-          throw new Error('当前环境不支持 Cookie 操作');
+          ElNotification({
+            title: 'Error',
+            message: '当前环境不支持 Cookie 操作',
+            type: 'error',
+          })          
+          return            
         }
-        let currentDomain = '';
-        const urlObj = new URL(window.location.href);
+        let currentDomain = '';targetOrigin
+        const urlObj = new URL(targetOrigin);
         currentDomain = urlObj.hostname;
         const isHttps = urlObj.protocol === 'https:';
 
@@ -278,7 +396,12 @@ const handleInject = async () => {
         // 验证 Cookie 是否注入成功（可选）
         const isSuccess = document.cookie.includes(encodeURIComponent(tokenName));
         if (!isSuccess) {
-          throw new Error('Cookie 注入失败，请检查浏览器 Cookie 设置');
+          ElNotification({
+            title: 'Error',
+            message: 'Cookie 注入失败，请检查浏览器 Cookie 设置',
+            type: 'error',
+          })          
+          return           
         }   
         
         // 3. 成功提示（双环境通用）
@@ -291,7 +414,29 @@ const handleInject = async () => {
         })        
 
       }else{
-        injectToStorageDirectly(storageType, tokenName, tokenValue);
+        const currentOrigin = window.location.origin;
+        if (currentOrigin !== targetOrigin) {
+          ElNotification({
+            title: 'Error',
+            message: '普通浏览器环境不支持跨域存储操作，请直接在目标页面打开插件',
+            type: 'error',
+          })          
+          return            
+        }
+        // 直接操作当前页面存储
+        try {
+          const safeKey = escape(key);
+          const safeValue = escape(value);
+          window[storageType].setItem(safeKey, safeValue);
+        } catch (err) {
+          ElNotification({
+            title: 'Error',
+            message: `存储操作失败：${err.message}`,
+            type: 'error',
+          })          
+          return          
+        }
+        return;
       }
     }
   } catch (error) {

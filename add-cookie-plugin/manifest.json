@@ -5,7 +5,9 @@
     "description": "自定义 Token 名称和值，快速注入当前域名 Cookie",
     "permissions": [
       "cookies",  
-      "activeTab"
+      "activeTab",
+      "storage",
+      "scripting"
     ],
     "action": {
       "default_popup": "popup.html", 
