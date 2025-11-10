@@ -10,12 +10,12 @@
         <el-form-item label="目标域名" prop="targetDomain">
           <el-input
             v-model="form.targetDomain"
-            placeholder="输入目标域名（如 https://doubao.com 或 doubao.com）"
+            placeholder="输入目标域名（如 https://xxx.com 或 xxx.com）"
             clearable
             @input="handleDomainInput"
           />
           <el-text size="small" type="info" class="mt-1 block">
-            支持格式：doubao.com、https://test.doubao.com、http://localhost:8080
+            支持格式：xxx.com、https://test.xxx.com、http://localhost:8080
           </el-text>
         </el-form-item>  
         <!-- 存储方式选择 -->
@@ -134,7 +134,7 @@ const formattedDomain = ref('')
 const DomainValidator = {
   /**
    * 验证域名是否合法（支持带协议/不带协议、带端口）
-   * @param domain 用户输入的域名（如 doubao.com、https://test.doubao.com:8080）
+   * @param domain 用户输入的域名（如 xxx.com、https://test.xxx.com:8080）
    */
   isValidDomain(domain) {
     if (!domain.trim()) return false;
@@ -164,7 +164,7 @@ const DomainValidator = {
 
   /**
    * 提取域名的主机名（用于 Cookie 配置）
-   * @param domain 格式化后的域名（如 http://test.doubao.com:8080）
+   * @param domain 格式化后的域名（如 http://test.xxx.com:8080）
    */
   getHostname(domain) {
     try {

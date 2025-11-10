@@ -3,8 +3,8 @@ import { ElCard as F, ElForm as P, ElFormItem as v, ElInput as H, ElText as j, E
 import { Loading as K } from "@element-plus/icons-vue";
 const G = (k, d) => {
   const w = k.__vccOpts || k;
-  for (const [I, h] of d)
-    w[I] = h;
+  for (const [I, x] of d)
+    w[I] = x;
   return w;
 }, J = { class: "content-container" }, Q = {
   __name: "TokenInjector",
@@ -28,27 +28,27 @@ const G = (k, d) => {
   },
   setup(k) {
     const d = k, w = (t) => {
-      x.isValidDomain(t) ? b.value = x.formatDomain(t) : b.value = "";
+      T.isValidDomain(t) ? h.value = T.formatDomain(t) : h.value = "";
     }, I = (t, e, u) => {
       if (!e.trim()) {
         u("请输入目标域名");
         return;
       }
-      if (!x.isValidDomain(e)) {
+      if (!T.isValidDomain(e)) {
         u("域名格式不合法 支持 abc.com 、 https://test.abc.com）");
         return;
       }
-      b.value = x.formatDomain(e), u();
-    }, h = g(null), s = g({
+      h.value = T.formatDomain(e), u();
+    }, x = g(null), s = g({
       targetDomain: "",
       storageType: d.defaultStorageType,
       tokenName: d.defaultTokenName,
       tokenValue: "",
       expireHours: d.defaultExpireHours
-    }), b = g(""), x = {
+    }), h = g(""), T = {
       /**
        * 验证域名是否合法（支持带协议/不带协议、带端口）
-       * @param domain 用户输入的域名（如 doubao.com、https://test.doubao.com:8080）
+       * @param domain 用户输入的域名（如 xxx.com、https://test.xxx.com:8080）
        */
       isValidDomain(t) {
         return t.trim() ? /^(https?:\/\/)?(([\w-]+\.)+[\w-]+|localhost|(\d{1,3}\.){3}\d{1,3})(:\d+)?(\/.*)?$/.test(t) : !1;
@@ -68,7 +68,7 @@ const G = (k, d) => {
       },
       /**
        * 提取域名的主机名（用于 Cookie 配置）
-       * @param domain 格式化后的域名（如 http://test.doubao.com:8080）
+       * @param domain 格式化后的域名（如 http://test.xxx.com:8080）
        */
       getHostname(t) {
         try {
@@ -87,7 +87,7 @@ const G = (k, d) => {
       tokenName: [{ required: !0, message: "请输入 Token 名称", trigger: "blur" }],
       tokenValue: [{ required: !0, message: "请输入 Token 值", trigger: "blur" }],
       expireHours: [{ required: !0, message: "请输入过期时间", trigger: "blur" }]
-    }), E = g(!1), T = g(""), S = g("success"), { disableExpireInput: V } = d;
+    }), E = g(!1), b = g(""), S = g("success"), { disableExpireInput: V } = d;
     N(
       () => d.defaultStorageType,
       (t) => {
@@ -110,16 +110,16 @@ const G = (k, d) => {
       V && (s.value.expireHours = 0);
     });
     const A = () => {
-      h.value?.resetFields(), T.value = "", b.value = "";
+      x.value?.resetFields(), b.value = "", h.value = "";
     }, B = async () => {
       try {
-        await h.value?.validate();
+        await x.value?.validate();
       } catch {
         return;
       }
-      E.value = !0, T.value = "";
+      E.value = !0, b.value = "";
       try {
-        const { storageType: t, tokenName: e, tokenValue: u, expireHours: y } = s.value, o = b.value;
+        const { storageType: t, tokenName: e, tokenValue: u, expireHours: y } = s.value, o = h.value;
         if (typeof window < "u" && typeof chrome < "u" && chrome.tabs && chrome.cookies)
           if (t == "cookie") {
             const n = new URL(o), l = {
@@ -133,7 +133,7 @@ const G = (k, d) => {
               sameSite: "lax",
               path: "/",
               // 全站可用
-              domain: x.getHostname(o)
+              domain: T.getHostname(o)
               // 自动提取主机名
             };
             if (y > 0) {
@@ -153,7 +153,7 @@ const G = (k, d) => {
                 }
                 m();
               });
-            }), T.value = `✅ 成功注入 Token 到 ${o}！`, S.value = "success", p({
+            }), b.value = `✅ 成功注入 Token 到 ${o}！`, S.value = "success", p({
               title: "Success",
               message: `Cookie 注入成功，可在开发者工具 Application → Cookies → ${o} 中查看`,
               type: "success"
@@ -220,7 +220,7 @@ const G = (k, d) => {
             });
             return;
           }
-          T.value = `✅ 成功注入 Token 到 ${n}！`, S.value = "success", p({
+          b.value = `✅ 成功注入 Token 到 ${n}！`, S.value = "success", p({
             title: "Success",
             message: `Cookie 注入成功，可在开发者工具 Application → Cookies → ${n} 中查看`,
             type: "success"
@@ -249,7 +249,7 @@ const G = (k, d) => {
         }
       } catch (t) {
         const e = t instanceof Error ? t.message : "未知错误";
-        T.value = `❌ ${e}`, S.value = "error", p({
+        b.value = `❌ ${e}`, S.value = "error", p({
           title: "Error",
           message: e,
           type: "error"
@@ -271,7 +271,7 @@ const G = (k, d) => {
               model: s.value,
               rules: q.value,
               ref_key: "formRef",
-              ref: h,
+              ref: x,
               "label-width": "120px",
               class: "form-container"
             }, {
@@ -284,7 +284,7 @@ const G = (k, d) => {
                     a(r(H), {
                       modelValue: s.value.targetDomain,
                       "onUpdate:modelValue": e[0] || (e[0] = (o) => s.value.targetDomain = o),
-                      placeholder: "输入目标域名（如 https://doubao.com 或 doubao.com）",
+                      placeholder: "输入目标域名（如 https://xxx.com 或 xxx.com）",
                       clearable: "",
                       onInput: w
                     }, null, 8, ["modelValue"]),
@@ -294,7 +294,7 @@ const G = (k, d) => {
                       class: "mt-1 block"
                     }, {
                       default: i(() => [...e[5] || (e[5] = [
-                        D(" 支持格式：doubao.com、https://test.doubao.com、http://localhost:8080 ", -1)
+                        D(" 支持格式：xxx.com、https://test.xxx.com、http://localhost:8080 ", -1)
                       ])]),
                       _: 1
                     })
@@ -428,7 +428,7 @@ const G = (k, d) => {
       });
     };
   }
-}, X = /* @__PURE__ */ G(Q, [["__scopeId", "data-v-6f695907"]]), oe = {
+}, X = /* @__PURE__ */ G(Q, [["__scopeId", "data-v-1c0eba1f"]]), oe = {
   install: (k) => {
     k.component("TokenInjector", X);
   }
