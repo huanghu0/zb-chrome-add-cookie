@@ -1,8 +1,8 @@
-import { ref as g, watch as N, onMounted as M, resolveComponent as R, createBlock as $, openBlock as _, unref as r, withCtx as i, createElementVNode as U, createVNode as a, createCommentVNode as O, createTextVNode as D } from "vue";
-import { ElCard as F, ElForm as P, ElFormItem as v, ElInput as H, ElText as j, ElInputNumber as W, ElButton as L, ElIcon as z, ElNotification as p } from "element-plus";
+import { ref as k, watch as S, onMounted as B, resolveComponent as H, createBlock as _, openBlock as $, unref as l, withCtx as i, createElementVNode as R, createVNode as o, createCommentVNode as U, createTextVNode as D } from "vue";
+import { ElCard as M, ElForm as F, ElFormItem as v, ElInput as O, ElText as j, ElInputNumber as P, ElButton as L, ElIcon as W, ElNotification as p } from "element-plus";
 import { Loading as K } from "@element-plus/icons-vue";
-const G = (k, d) => {
-  const w = k.__vccOpts || k;
+const G = (y, d) => {
+  const w = y.__vccOpts || y;
   for (const [I, x] of d)
     w[I] = x;
   return w;
@@ -26,26 +26,26 @@ const G = (k, d) => {
       default: !1
     }
   },
-  setup(k) {
-    const d = k, w = (t) => {
-      T.isValidDomain(t) ? h.value = T.formatDomain(t) : h.value = "";
-    }, I = (t, e, u) => {
+  setup(y) {
+    const d = y, w = (t) => {
+      b.isValidDomain(t) ? h.value = b.formatDomain(t) : h.value = "";
+    }, I = (t, e, s) => {
       if (!e.trim()) {
-        u("请输入目标域名");
+        s("请输入目标域名");
         return;
       }
-      if (!T.isValidDomain(e)) {
-        u("域名格式不合法 支持 abc.com 、 https://test.abc.com）");
+      if (!b.isValidDomain(e)) {
+        s("域名格式不合法 支持 abc.com 、 https://test.abc.com）");
         return;
       }
-      h.value = T.formatDomain(e), u();
-    }, x = g(null), s = g({
+      h.value = b.formatDomain(e), s();
+    }, x = k(null), a = k({
       targetDomain: "",
       storageType: d.defaultStorageType,
       tokenName: d.defaultTokenName,
       tokenValue: "",
       expireHours: d.defaultExpireHours
-    }), h = g(""), T = {
+    }), h = k(""), b = {
       /**
        * 验证域名是否合法（支持带协议/不带协议、带端口）
        * @param domain 用户输入的域名（如 xxx.com、https://test.xxx.com:8080）
@@ -77,7 +77,7 @@ const G = (k, d) => {
           return t;
         }
       }
-    }, q = g({
+    }, q = k({
       targetDomain: [
         { required: !0, message: "请输入目标域名", trigger: "blur" },
         { validator: I, trigger: "blur" }
@@ -87,64 +87,64 @@ const G = (k, d) => {
       tokenName: [{ required: !0, message: "请输入 Token 名称", trigger: "blur" }],
       tokenValue: [{ required: !0, message: "请输入 Token 值", trigger: "blur" }],
       expireHours: [{ required: !0, message: "请输入过期时间", trigger: "blur" }]
-    }), E = g(!1), b = g(""), S = g("success"), { disableExpireInput: V } = d;
-    N(
+    }), E = k(!1), T = k(""), N = k("success"), { disableExpireInput: V } = d;
+    S(
       () => d.defaultStorageType,
       (t) => {
-        t && !s.value.storageType && (s.value.storageType = t);
+        t && !a.value.storageType && (a.value.storageType = t);
       },
       { immediate: !0 }
-    ), N(
+    ), S(
       () => d.defaultTokenName,
       (t) => {
-        t && !s.value.tokenName && (s.value.tokenName = t);
+        t && !a.value.tokenName && (a.value.tokenName = t);
       },
       { immediate: !0 }
-    ), N(
+    ), S(
       () => d.defaultExpireHours,
       (t) => {
-        t !== void 0 && !V && (s.value.expireHours = t);
+        t !== void 0 && !V && (a.value.expireHours = t);
       },
       { immediate: !0 }
-    ), M(() => {
-      V && (s.value.expireHours = 0);
+    ), B(() => {
+      V && (a.value.expireHours = 0);
     });
-    const A = () => {
-      x.value?.resetFields(), b.value = "", h.value = "";
-    }, B = async () => {
+    const z = () => {
+      x.value?.resetFields(), T.value = "", h.value = "";
+    }, A = async () => {
       try {
         await x.value?.validate();
       } catch {
         return;
       }
-      E.value = !0, b.value = "";
+      E.value = !0, T.value = "";
       try {
-        const { storageType: t, tokenName: e, tokenValue: u, expireHours: y } = s.value, o = h.value;
+        const { storageType: t, tokenName: e, tokenValue: s, expireHours: g } = a.value, r = h.value;
         if (typeof window < "u" && typeof chrome < "u" && chrome.tabs && chrome.cookies)
           if (t == "cookie") {
-            const n = new URL(o), l = {
-              url: o,
+            const u = new URL(r), n = {
+              url: r,
               // 目标域名 origin
               name: e,
-              value: u,
-              secure: n.protocol === "https:",
+              value: s,
+              secure: u.protocol === "https:",
               // HTTPS 自动启用 secure
               httpOnly: !1,
               sameSite: "lax",
               path: "/",
               // 全站可用
-              domain: T.getHostname(o)
+              domain: b.getHostname(r)
               // 自动提取主机名
             };
-            if (y > 0) {
+            if (g > 0) {
               const m = /* @__PURE__ */ new Date();
-              m.setTime(m.getTime() + y * 60 * 60 * 1e3), l.expirationDate = m.getTime() / 1e3;
+              m.setTime(m.getTime() + g * 60 * 60 * 1e3), n.expirationDate = m.getTime() / 1e3;
             }
             await new Promise((m, c) => {
-              chrome.cookies.set(l, (C) => {
+              chrome.cookies.set(n, (C) => {
                 if (chrome.runtime.lastError) {
                   const f = chrome.runtime.lastError.message;
-                  f.includes("No host permissions") ? c(new Error(`注入失败：无 ${n.origin} 的 Cookie 操作权限，请检查插件 manifest 配置`)) : c(new Error(`注入失败：${f}`));
+                  f.includes("No host permissions") ? c(new Error(`注入失败：无 ${u.origin} 的 Cookie 操作权限，请检查插件 manifest 配置`)) : c(new Error(`注入失败：${f}`));
                   return;
                 }
                 if (!C) {
@@ -153,31 +153,31 @@ const G = (k, d) => {
                 }
                 m();
               });
-            }), b.value = `✅ 成功注入 Token 到 ${o}！`, S.value = "success", p({
+            }), T.value = `✅ 成功注入 Token 到 ${r}！`, N.value = "success", p({
               title: "Success",
-              message: `Cookie 注入成功，可在开发者工具 Application → Cookies → ${o} 中查看`,
+              message: `Cookie 注入成功，可在开发者工具 Application → Cookies → ${r} 中查看`,
               type: "success"
             });
           } else {
-            const [n] = await new Promise((l) => {
-              chrome.tabs.query({ url: `${o}/*` }, l);
+            const [u] = await new Promise((n) => {
+              chrome.tabs.query({ url: `${r}/*` }, n);
             });
-            if (!n) {
+            if (!u) {
               p({
                 title: "Error",
-                message: `未找到打开的 ${o} 标签页，请先打开目标域名页面`,
+                message: `未找到打开的 ${r} 标签页，请先打开目标域名页面`,
                 type: "error"
               });
               return;
             }
             try {
-              console.log(n, "targetTab"), await chrome.scripting.executeScript({
-                target: { tabId: n.id },
-                func: (l, m, c) => {
+              console.log(u, "targetTab"), await chrome.scripting.executeScript({
+                target: { tabId: u.id },
+                func: (n, m, c) => {
                   const C = escape(m), f = escape(c);
-                  window[l].setItem(C, f);
+                  window[n].setItem(C, f);
                 },
-                args: [t, e, u],
+                args: [t, e, s],
                 world: "MAIN"
                 // 注入到页面主世界，确保能访问页面存储
               }), p({
@@ -185,10 +185,10 @@ const G = (k, d) => {
                 message: `Cookie 注入成功，可在开发者工具 Application → ${t} 中查看`,
                 type: "success"
               });
-            } catch (l) {
+            } catch (n) {
               p({
                 title: "Error",
-                message: `插件注入失败：${l.message}（请检查目标页面是否允许脚本注入）`,
+                message: `插件注入失败：${n.message}（请检查目标页面是否允许脚本注入）`,
                 type: "error"
               });
               return;
@@ -203,16 +203,16 @@ const G = (k, d) => {
             });
             return;
           }
-          let n = "";
-          const l = new URL(o);
-          n = l.hostname;
-          const m = l.protocol === "https:";
-          let c = `${encodeURIComponent(e)}=${encodeURIComponent(u)}; path=/;`;
-          if (y > 0 && !V) {
+          let u = "";
+          const n = new URL(r);
+          u = n.hostname;
+          const m = n.protocol === "https:";
+          let c = `${encodeURIComponent(e)}=${encodeURIComponent(s)}; path=/;`;
+          if (g > 0 && !V) {
             const f = /* @__PURE__ */ new Date();
-            f.setTime(f.getTime() + y * 60 * 60 * 1e3), c += ` expires=${f.toUTCString()};`;
+            f.setTime(f.getTime() + g * 60 * 60 * 1e3), c += ` expires=${f.toUTCString()};`;
           }
-          if (m && (c += " secure;"), c += " SameSite=Lax;", n !== "localhost" && !n.startsWith("127.0.0.") && (c += ` domain=${n};`), document.cookie = c, !document.cookie.includes(encodeURIComponent(e))) {
+          if (m && (c += " secure;"), c += " SameSite=Lax;", u !== "localhost" && !u.startsWith("127.0.0.") && (c += ` domain=${u};`), document.cookie = c, !document.cookie.includes(encodeURIComponent(e))) {
             p({
               title: "Error",
               message: "Cookie 注入失败，请检查浏览器 Cookie 设置",
@@ -220,13 +220,13 @@ const G = (k, d) => {
             });
             return;
           }
-          b.value = `✅ 成功注入 Token 到 ${n}！`, S.value = "success", p({
+          T.value = `✅ 成功注入 Token 到 ${u}！`, N.value = "success", p({
             title: "Success",
-            message: `Cookie 注入成功，可在开发者工具 Application → Cookies → ${n} 中查看`,
+            message: `Cookie 注入成功，可在开发者工具 Application → Cookies → ${u} 中查看`,
             type: "success"
           });
         } else {
-          if (window.location.origin !== o) {
+          if (window.location.origin !== r) {
             p({
               title: "Error",
               message: "普通浏览器环境不支持跨域存储操作，请直接在目标页面打开插件",
@@ -235,12 +235,12 @@ const G = (k, d) => {
             return;
           }
           try {
-            const l = escape(key), m = escape(value);
-            window[t].setItem(l, m);
-          } catch (l) {
+            const n = escape(key), m = escape(value);
+            window[t].setItem(n, m);
+          } catch (n) {
             p({
               title: "Error",
-              message: `存储操作失败：${l.message}`,
+              message: `存储操作失败：${n.message}`,
               type: "error"
             });
             return;
@@ -249,7 +249,7 @@ const G = (k, d) => {
         }
       } catch (t) {
         const e = t instanceof Error ? t.message : "未知错误";
-        b.value = `❌ ${e}`, S.value = "error", p({
+        T.value = `❌ ${e}`, N.value = "error", p({
           title: "Error",
           message: e,
           type: "error"
@@ -259,16 +259,16 @@ const G = (k, d) => {
       }
     };
     return (t, e) => {
-      const u = R("el-option"), y = R("el-select");
-      return _(), $(r(F), {
+      const s = H("el-option"), g = H("el-select");
+      return $(), _(l(M), {
         shadow: "hover",
         "body-style": { padding: "20px", minHeight: "300px" }
       }, {
         default: i(() => [
-          e[9] || (e[9] = U("h3", { class: "component-title" }, "Token 注入 Cookie 工具", -1)),
-          U("div", J, [
-            a(r(P), {
-              model: s.value,
+          e[9] || (e[9] = R("h3", { class: "component-title" }, "Token 注入 Cookie 工具", -1)),
+          R("div", J, [
+            o(l(F), {
+              model: a.value,
               rules: q.value,
               ref_key: "formRef",
               ref: x,
@@ -276,19 +276,19 @@ const G = (k, d) => {
               class: "form-container"
             }, {
               default: i(() => [
-                a(r(v), {
+                o(l(v), {
                   label: "目标域名",
                   prop: "targetDomain"
                 }, {
                   default: i(() => [
-                    a(r(H), {
-                      modelValue: s.value.targetDomain,
-                      "onUpdate:modelValue": e[0] || (e[0] = (o) => s.value.targetDomain = o),
+                    o(l(O), {
+                      modelValue: a.value.targetDomain,
+                      "onUpdate:modelValue": e[0] || (e[0] = (r) => a.value.targetDomain = r),
                       placeholder: "输入目标域名（如 https://xxx.com 或 xxx.com）",
                       clearable: "",
                       onInput: w
                     }, null, 8, ["modelValue"]),
-                    a(r(j), {
+                    o(l(j), {
                       size: "small",
                       type: "info",
                       class: "mt-1 block"
@@ -301,27 +301,27 @@ const G = (k, d) => {
                   ]),
                   _: 1
                 }),
-                a(r(v), {
+                o(l(v), {
                   label: "存储方式",
                   prop: "storageType"
                 }, {
                   default: i(() => [
-                    a(y, {
-                      modelValue: s.value.storageType,
-                      "onUpdate:modelValue": e[1] || (e[1] = (o) => s.value.storageType = o),
+                    o(g, {
+                      modelValue: a.value.storageType,
+                      "onUpdate:modelValue": e[1] || (e[1] = (r) => a.value.storageType = r),
                       placeholder: "选择存储方式",
                       clearable: ""
                     }, {
                       default: i(() => [
-                        a(u, {
+                        o(s, {
                           label: "Cookie",
                           value: "cookie"
                         }),
-                        a(u, {
+                        o(s, {
                           label: "LocalStorage",
                           value: "localStorage"
                         }),
-                        a(u, {
+                        o(s, {
                           label: "SessionStorage",
                           value: "sessionStorage"
                         })
@@ -331,28 +331,46 @@ const G = (k, d) => {
                   ]),
                   _: 1
                 }),
-                a(r(v), {
+                o(l(v), {
                   label: "Token 名称",
                   prop: "tokenName"
                 }, {
                   default: i(() => [
-                    a(r(H), {
-                      modelValue: s.value.tokenName,
-                      "onUpdate:modelValue": e[2] || (e[2] = (o) => s.value.tokenName = o),
-                      placeholder: "输入后端需要的 Cookie 键名（如 auth_token）",
-                      clearable: ""
-                    }, null, 8, ["modelValue"])
+                    o(g, {
+                      modelValue: a.value.tokenName,
+                      "onUpdate:modelValue": e[2] || (e[2] = (r) => a.value.tokenName = r),
+                      placeholder: "选择tokenName",
+                      clearable: "",
+                      filterable: "",
+                      "allow-create": ""
+                    }, {
+                      default: i(() => [
+                        o(s, {
+                          label: "token",
+                          value: "token"
+                        }),
+                        o(s, {
+                          label: "expired",
+                          value: "expired"
+                        }),
+                        o(s, {
+                          label: "emmark_platform_authorization",
+                          value: "emmark_platform_authorization"
+                        })
+                      ]),
+                      _: 1
+                    }, 8, ["modelValue"])
                   ]),
                   _: 1
                 }),
-                a(r(v), {
+                o(l(v), {
                   label: "Token 值",
                   prop: "tokenValue"
                 }, {
                   default: i(() => [
-                    a(r(H), {
-                      modelValue: s.value.tokenValue,
-                      "onUpdate:modelValue": e[3] || (e[3] = (o) => s.value.tokenValue = o),
+                    o(l(O), {
+                      modelValue: a.value.tokenValue,
+                      "onUpdate:modelValue": e[3] || (e[3] = (r) => a.value.tokenValue = r),
                       placeholder: "输入后端生成的有效 Token 字符串",
                       type: "textarea",
                       rows: 3,
@@ -361,21 +379,21 @@ const G = (k, d) => {
                   ]),
                   _: 1
                 }),
-                r(V) ? O("", !0) : (_(), $(r(v), {
+                l(V) ? U("", !0) : ($(), _(l(v), {
                   key: 0,
                   label: "过期时间",
                   prop: "expireHours"
                 }, {
                   default: i(() => [
-                    a(r(W), {
-                      modelValue: s.value.expireHours,
-                      "onUpdate:modelValue": e[4] || (e[4] = (o) => s.value.expireHours = o),
+                    o(l(P), {
+                      modelValue: a.value.expireHours,
+                      "onUpdate:modelValue": e[4] || (e[4] = (r) => a.value.expireHours = r),
                       min: 0,
                       step: 1,
                       suffix: "小时",
                       "controls-position": "right"
                     }, null, 8, ["modelValue"]),
-                    a(r(j), {
+                    o(l(j), {
                       size: "small",
                       type: "info",
                       class: "expire-tip"
@@ -388,27 +406,27 @@ const G = (k, d) => {
                   ]),
                   _: 1
                 })),
-                a(r(v), null, {
+                o(l(v), null, {
                   default: i(() => [
-                    a(r(L), {
+                    o(l(L), {
                       type: "primary",
-                      onClick: B,
+                      onClick: A,
                       loading: E.value
                     }, {
                       default: i(() => [
-                        E.value ? (_(), $(r(z), { key: 0 }, {
+                        E.value ? ($(), _(l(W), { key: 0 }, {
                           default: i(() => [
-                            a(r(K))
+                            o(l(K))
                           ]),
                           _: 1
-                        })) : O("", !0),
+                        })) : U("", !0),
                         e[7] || (e[7] = D(" 注入 Cookie ", -1))
                       ]),
                       _: 1
                     }, 8, ["loading"]),
-                    a(r(L), {
+                    o(l(L), {
                       type: "text",
-                      onClick: A,
+                      onClick: z,
                       class: "ml-2"
                     }, {
                       default: i(() => [...e[8] || (e[8] = [
@@ -428,9 +446,9 @@ const G = (k, d) => {
       });
     };
   }
-}, X = /* @__PURE__ */ G(Q, [["__scopeId", "data-v-1c0eba1f"]]), oe = {
-  install: (k) => {
-    k.component("TokenInjector", X);
+}, X = /* @__PURE__ */ G(Q, [["__scopeId", "data-v-34df004f"]]), oe = {
+  install: (y) => {
+    y.component("TokenInjector", X);
   }
 };
 export {
