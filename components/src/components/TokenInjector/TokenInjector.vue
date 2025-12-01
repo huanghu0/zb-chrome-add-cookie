@@ -31,11 +31,17 @@
           </el-select>
         </el-form-item>        
         <el-form-item label="Token 名称" prop="tokenName">
-          <el-input
+          <el-select
             v-model="form.tokenName"
-            placeholder="输入后端需要的 Cookie 键名（如 auth_token）"
+            placeholder="选择tokenName"
             clearable
-          />
+            filterable
+            allow-create            
+          >
+            <el-option label="token" value="token" />
+            <el-option label="expired" value="expired" />
+            <el-option label="emmark_platform_authorization" value="emmark_platform_authorization" />
+          </el-select>          
         </el-form-item>
         <el-form-item label="Token 值" prop="tokenValue">
           <el-input
